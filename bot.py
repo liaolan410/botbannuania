@@ -30,7 +30,7 @@ intents.members = True
 intents.message_content = True
 
 # กำหนด Discord User ID ของเจ้าของบอท (เปลี่ยนเป็นไอดีของคุณ)
-OWNER_ID = 123456789012345678  # <-- ใส่ User ID ของคุณตรงนี้
+OWNER_ID = 1346237077427327089  # <-- ใส่ User ID ของคุณตรงนี้
 
 class BanBot(discord.Client):
     def __init__(self):
