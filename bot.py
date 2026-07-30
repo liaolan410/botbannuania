@@ -1,14 +1,36 @@
+import os
 import discord
 from discord import app_commands
 from datetime import timedelta
+from dotenv import load_dotenv
+from flask import Flask
+from threading import Thread
 
-# ตั้งค่า Intents
+# โหลดค่าจากไฟล์ .env หรือ Environment Variables
+load_dotenv()
+TOKEN = os.getenv("DISCORD_TOKEN")
+
+# สร้างเว็บเซิร์ฟเวอร์จำลองสำหรับ Render (เพื่อให้รันบนแพ็กเกจฟรีได้)
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot is active and running!"
+
+def run_web():
+    app.run(host='0.0.0.0', port=8080)
+
+def keep_alive():
+    t = Thread(target=run_web)
+    t.start()
+
+# ตั้งค่า Intents ของบอท
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
 
 # กำหนด Discord User ID ของเจ้าของบอท (เปลี่ยนเป็นไอดีของคุณ)
-OWNER_ID = 1346237077427327089  # <-- ใส่ User ID ของคุณตรงนี้
+OWNER_ID = 123456789012345678  # <-- ใส่ User ID ของคุณตรงนี้
 
 class BanBot(discord.Client):
     def __init__(self):
@@ -43,11 +65,10 @@ def is_owner():
 @is_owner()
 async def ban(interaction: discord.Interaction, member: discord.Member, reason: str = "ไม่ได้ระบุเหตุผล"):
     if member.top_role >= interaction.user.top_role and interaction.guild.owner != interaction.user:
-        await interaction.response.send_message("<a:1509286630278566008:1509286630278566008> คุณไม่สามารถแบนคนที่มีตำแหน่งสูงกว่าหรือเท่ากับคุณได้!", ephemeral=True)
+        await interaction.response.send_message("คุณไม่สามารถแบนคนที่มีตำแหน่งสูงกว่าหรือเท่ากับคุณได้!", ephemeral=True)
         return
 
     try:
-        # ส่ง DM หาผู้ถูกแบนก่อน (ถ้าทำได้)
         try:
             embed_dm = discord.Embed(
                 title="คุณถูกแบนจากเซิร์ฟเวอร์",
@@ -60,7 +81,6 @@ async def ban(interaction: discord.Interaction, member: discord.Member, reason: 
 
         await member.ban(reason=reason)
 
-        # สร้าง Embed แจ้งเตือนความสำเร็จ
         embed = discord.Embed(
             title="ดำเนินการแบนสำเร็จ",
             color=discord.Color.red(),
@@ -73,7 +93,6 @@ async def ban(interaction: discord.Interaction, member: discord.Member, reason: 
         
         await interaction.response.send_message(embed=embed)
 
-        # ส่ง Log ไปยังห้องที่กำหนด
         log_channel = interaction.guild.get_channel(LOG_CHANNEL_ID)
         if log_channel:
             await log_channel.send(embed=embed)
@@ -191,8 +210,7 @@ async def on_app_command_error(interaction: discord.Interaction, error: app_comm
     else:
         raise error
 
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-bot.run(os.getenv("DISCORD_TOKEN"))
+# สตาร์ทเว็บจำลองเพื่อให้ Render ยอมรับการรันแบบฟรี แล้วรันบอท
+if __name__ == "__main__":
+    keep_alive()
+    bot.run(TOKEN)
